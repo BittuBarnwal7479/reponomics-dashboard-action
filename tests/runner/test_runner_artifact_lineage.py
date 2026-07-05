@@ -38,6 +38,84 @@ def test_collect_fixture_updates_artifact_without_rendering_outputs(
     assert not config.pages_index_path.exists()
 
 
+def test_pre_upload_verifier_accepts_encrypted_retained_packet(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    config = _config(tmp_path)
+    _seed_log(config.data_dir)
+
+    run.validate_config(config)
+    run.run_collect(config, restore_artifact=False, execute_collect=False)
+    encrypted_packet = tmp_path / ".dashboard-data-artifact" / "dashboard-data.enc"
+
+    run.run_verify_retained_upload(config)
+
+    assert encrypted_packet.exists()
+
+
+def test_pre_upload_verifier_rejects_corrupt_encrypted_packet(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    config = _config(tmp_path)
+    _seed_log(config.data_dir)
+
+    run.validate_config(config)
+    run.run_collect(config, restore_artifact=False, execute_collect=False)
+    encrypted_packet = tmp_path / ".dashboard-data-artifact" / "dashboard-data.enc"
+    encrypted_packet.write_text("not json", encoding="utf-8")
+
+    with pytest.raises(run.ActionError, match="failed upload validation"):
+        run.run_verify_retained_upload(config)
+
+
+def test_pre_upload_verifier_rejects_unexpected_plaintext_upload_member(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    config = _config(
+        tmp_path,
+        data_mode="plaintext",
+        dashboard_secret="",
+        publish_pages_requested=False,
+    )
+    _seed_log(config.data_dir)
+
+    run.validate_config(config)
+    run.run_collect(config, restore_artifact=False, execute_collect=False)
+    (config.data_dir / "secret.txt").write_text("not retained data\n", encoding="utf-8")
+
+    with pytest.raises(run.ActionError, match="unexpected data members: secret.txt"):
+        run.run_verify_retained_upload(config)
+
+
+def test_pre_upload_verifier_rejects_nested_plaintext_upload_member(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    config = _config(
+        tmp_path,
+        data_mode="plaintext",
+        dashboard_secret="",
+        publish_pages_requested=False,
+    )
+    _seed_log(config.data_dir)
+
+    run.validate_config(config)
+    run.run_collect(config, restore_artifact=False, execute_collect=False)
+    nested = config.data_dir / "nested"
+    nested.mkdir()
+    (nested / "manifest.json").write_text("{}", encoding="utf-8")
+
+    with pytest.raises(run.ActionError, match="nested"):
+        run.run_verify_retained_upload(config)
+
+
 def test_lineage_rejects_child_missing_retained_parent_row(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

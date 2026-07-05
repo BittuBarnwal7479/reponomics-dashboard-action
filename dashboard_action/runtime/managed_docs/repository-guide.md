@@ -1,7 +1,7 @@
 # Reponomics Dashboard Documentation
 
-> [!WARNING]
-> The Reponomics Dashboard template is currently in a pre-release public hardening phase. It is not intended for public use, and documentation in this managed-docs bundle should not be considered authoritative.
+> [!NOTE]
+> These docs describe the official Reponomics generated workflows for the `v0` external beta. Repository owners can modify their copies; modified workflows may behave differently from what these docs describe.
 
 The Reponomics Dashboard is a GitHub-native repository traffic and growth dashboard. It collects views, clones, top referrers, popular paths, and repository growth counters, then renders static dashboard output during the `publish` workflow.
 
@@ -55,10 +55,10 @@ The generated `update-docs` workflow updates Reponomics-managed local documentat
 
 `data_mode` is the disclosure control passed to the action.
 
-| Mode | Retained artifact | Hosted dashboard | Downloadable dashboard artifact | Secret requirement | Intended use |
-| --- | --- | --- | --- | --- | --- |
-| `encrypted` | encrypted `dashboard-data.enc` | optional encrypted Pages artifact | encrypted when hosted publication is disabled | non-empty `DASHBOARD_SECRET_DO_NOT_REPLACE` | default; required for public repositories and hosted Pages dashboards |
-| `plaintext` | plaintext retained CSV files | disabled | plaintext, private repositories only | none | private repositories that use GitHub repo/artifact access as the boundary |
+| Mode        | Retained artifact              | Hosted dashboard                  | Downloadable dashboard artifact               | Secret requirement                          | Intended use                                                              |
+| ----------- | ------------------------------ | --------------------------------- | --------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
+| `encrypted` | encrypted `dashboard-data.enc` | optional encrypted Pages artifact | encrypted when hosted publication is disabled | non-empty `DASHBOARD_SECRET_DO_NOT_REPLACE` | default; required for public repositories and hosted Pages dashboards     |
+| `plaintext` | plaintext retained CSV files   | disabled                          | plaintext, private repositories only          | none                                        | private repositories that use GitHub repo/artifact access as the boundary |
 
 `plaintext` is rejected in public repositories. README dashboard generation is rejected in public repositories so repository metrics are not committed to public git history.
 

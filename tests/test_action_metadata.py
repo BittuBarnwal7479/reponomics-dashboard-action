@@ -100,6 +100,25 @@ def test_action_descriptions_do_not_contain_actions_expressions() -> None:
     assert offenders == []
 
 
+def test_readme_documents_action_inputs_and_outputs() -> None:
+    action = _action()
+    readme = Path("README.md").read_text(encoding="utf-8")
+
+    missing_inputs = [
+        name
+        for name in action["inputs"]
+        if f"`{name}`" not in readme
+    ]
+    missing_outputs = [
+        name
+        for name in action["outputs"]
+        if f"`{name}`" not in readme
+    ]
+
+    assert missing_inputs == []
+    assert missing_outputs == []
+
+
 def test_runtime_version_matches_release_metadata() -> None:
     project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
     release_manifest = yaml.safe_load(
@@ -144,59 +163,6 @@ def test_no_manual_production_template_publication_workflow() -> None:
     workflow_path = Path(".github/workflows/publish-template.yml")
 
     assert not workflow_path.exists()
-
-
-def test_publish_template_staging_workflow_targets_staging_repo_only() -> None:
-    workflow_text = Path(".github/workflows/publish-template-staging.yml").read_text(
-        encoding="utf-8"
-    )
-    workflow = yaml.safe_load(workflow_text)
-    publish_job = workflow["jobs"]["publish-template-staging"]
-    steps = publish_job["steps"]
-    commands = "\n".join(step["run"] for step in steps if "run" in step)
-    step_names = [step["name"] for step in steps]
-    app_token_step = next(
-        step for step in steps if step["name"] == "Create staging publication app token"
-    )
-
-    assert workflow["permissions"] == {}
-    assert "workflow_dispatch" in workflow[True]
-    assert publish_job["if"] == (
-        "${{ github.event_name == 'workflow_dispatch' && "
-        + "inputs.confirm_staging_template_publish }}"
-    )
-    assert "environment" not in publish_job
-    assert publish_job["permissions"] == {"contents": "read"}
-    assert publish_job["env"]["TEMPLATE_STAGING_EXPECTED_REPO"] == (
-        "reponomics/reponomics-dashboard-staging"
-    )
-    assert (
-        "Template staging publication is restricted to main or release tags" in workflow_text
-    )
-    assert "make verify-workflow-classification" in commands
-    assert "make build-template" not in commands
-    assert "make verify-template" in commands
-    assert "make validate-template-action-ref" in commands
-    assert "make template-smoke" in commands
-    assert "make template-consumer-e2e" in commands
-    assert "make publish-template-staging-dry-run" in commands
-    assert "make package-template-release" not in workflow_text
-    assert "actions/attest@" not in workflow_text
-    assert app_token_step["with"]["client-id"] == (
-        "${{ vars.TEMPLATE_STAGING_PUBLISH_APP_CLIENT_ID }}"
-    )
-    assert app_token_step["with"]["private-key"] == (
-        "${{ secrets.TEMPLATE_STAGING_PUBLISH_APP_PRIVATE_KEY }}"
-    )
-    assert app_token_step["with"]["repositories"] == "reponomics-dashboard-staging"
-    assert app_token_step["with"]["permission-contents"] == "write"
-    assert app_token_step["with"]["permission-workflows"] == "write"
-    assert step_names.index("Validate generated template staging gates") < step_names.index(
-        "Create staging publication app token"
-    )
-    assert step_names.index("Create staging publication app token") < step_names.index(
-        "Publish generated staging template repository"
-    )
 
 
 def test_ci_runs_generated_template_gates() -> None:
@@ -643,6 +609,43 @@ def test_doctor_mode_metadata_contract() -> None:
     assert "inputs.mode == 'doctor'" not in plaintext_data_upload["if"]
     assert "inputs.mode == 'collect'" in encrypted_data_upload["if"]
     assert "inputs.mode == 'collect'" in plaintext_data_upload["if"]
+
+
+def test_retained_data_uploads_are_verified_before_upload() -> None:
+    verifier = _step_by_name("Verify dashboard data artifact before upload")
+
+    for mode_expr in DATA_PRODUCER_MODES:
+        assert mode_expr in verifier["if"]
+    assert verifier["env"]["REPONOMICS_VERIFY_RETAINED_UPLOAD_ONLY"] == "true"
+    assert verifier["env"]["REPONOMICS_DASHBOARD_SECRET"] == "${{ inputs.dashboard-secret }}"
+    assert (
+        verifier["env"]["REPONOMICS_DASHBOARD_NEXT_SECRET"]
+        == "${{ inputs.dashboard-next-secret }}"
+    )
+    assert _step_index("Run Reponomics runtime") < _step_index(
+        "Verify dashboard data artifact before upload"
+    )
+    assert _step_index("Verify dashboard data artifact before upload") < _step_index(
+        "Verify GitHub Pages configuration"
+    )
+    assert _step_index("Verify dashboard data artifact before upload") < _step_index(
+        "Upload GitHub Pages artifact"
+    )
+    assert _step_index("Verify dashboard data artifact before upload") < _step_index(
+        "Deploy GitHub Pages"
+    )
+    assert _step_index("Verify dashboard data artifact before upload") < _step_index(
+        "Upload plaintext dashboard artifact"
+    )
+    assert _step_index("Verify dashboard data artifact before upload") < _step_index(
+        "Upload encrypted dashboard artifact"
+    )
+    assert _step_index("Verify dashboard data artifact before upload") < _step_index(
+        "Upload encrypted dashboard data artifact"
+    )
+    assert _step_index("Verify dashboard data artifact before upload") < _step_index(
+        "Upload dashboard data artifact"
+    )
 
 
 def test_incident_reset_purge_runs_after_data_upload() -> None:

@@ -355,6 +355,16 @@ def build_html() -> None:
       text-decoration: none;
       font-weight: 700;
     }}
+    .beta-panel {{
+      margin-top: 18px;
+      padding: 14px 16px;
+      border: 1px solid rgba(214,168,75,0.44);
+      border-radius: 8px;
+      background: rgba(214,168,75,0.09);
+      color: var(--muted);
+    }}
+    .beta-panel strong {{ color: var(--gold); }}
+    .beta-panel a {{ font-weight: 700; }}
     .map-grid {{
       display: grid;
       grid-template-columns: minmax(12rem, 0.34fr) minmax(0, 1fr);
@@ -431,6 +441,9 @@ def build_html() -> None:
         <p class="lede">A concise visual guide to the Reponomics dashboard: what each section is for, how the lead story connects metrics to practical repo events, and what is interactive in the demo.</p>
       </div>
       <nav class="actions" aria-label="Guide actions">
+        <a class="button" href="https://reponomics.github.io/reponomics-dashboard-demo/">Live demo</a>
+        <a class="button" href="https://github.com/reponomics/reponomics-dashboard/generate">Copy template</a>
+        <a class="button" href="https://github.com/reponomics/reponomics-dashboard/blob/main/docs/reponomics/dashboard-essentials.md">Setup checklist</a>
         <a class="button" href="../pdf/reponomics-dashboard-map.pdf">Open PDF</a>
         <a class="button" href="assets/full-page.png">Full screenshot</a>
       </nav>
