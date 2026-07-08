@@ -5,7 +5,7 @@
 
 This is the setup README for your Reponomics dashboard repository. Reponomics helps maintainers collect GitHub traffic and growth data, keep that data in their own repository's workflow artifacts, and render a dashboard without sending the data to a Reponomics-hosted service.
 
-After you copy the template, the repository is yours. The generated workflows use your credentials, your repository secrets, and the action version pinned by the local wrapper at `.github/actions/reponomics/action.yml`. This README helps you configure collection, data storage, and dashboard publication before the first setup run. Setup may replace this file with a shorter post-setup README, and private repositories can later opt into a generated metrics README dashboard.
+After you copy the template, the repository is yours. The generated workflows use your credentials, your repository secrets, and the action ref configured by the local wrapper at `.github/actions/reponomics/action.yml`. This README helps you configure collection, data storage, and dashboard publication before the first setup run. Setup may replace this file with a shorter post-setup README, and private repositories can later opt into a generated metrics README dashboard.
 
 The dashboard collects GitHub traffic and growth data, stores retained state in GitHub Actions artifacts, and renders optional dashboard outputs through GitHub Actions. The repository stays intentionally thin: collection, encryption, rendering, key rotation, incident reset behavior, CSV export, and managed docs update are owned by the versioned action referenced by the local wrapper.
 
@@ -13,14 +13,14 @@ The dashboard collects GitHub traffic and growth data, stores retained state in 
 uses: ./.github/actions/reponomics
 ```
 
-If your organization requires full-SHA-pinned Actions, use `docs/reponomics/.manifest.json` to find the action repository and action version for this template snapshot, resolve that version tag to a commit SHA, and update the nested `uses:` line in `.github/actions/reponomics/action.yml` only if you intend to own manual action updates.
+If your organization requires full-SHA-pinned Actions, use `docs/reponomics/.manifest.json` to find the action repository and action version for this template snapshot, resolve that version tag to a commit SHA, and update the nested Reponomics `uses:` line in `.github/actions/reponomics/action.yml` only if you intend to own manual action updates. Organization-wide SHA policies may also require pinning other workflow action refs, such as `actions/checkout`, in the generated workflow files.
 
 ## Get Started
 
 1. Fill in the required setup fields at the top of `config.yaml`, commit that change, and decide which repositories this dashboard should track.
 2. Create a collection credential and store it as the repository secret `COLLECTION_TOKEN`. Most single-owner dashboards should use a fine-grained personal access token with repository `Administration: read`.
 3. Choose a data mode in `config.yaml`: `encrypted` or `plaintext`. Public repositories must use `encrypted`.
-4. For `encrypted`, generate and save `DASHBOARD_SECRET_DO_NOT_REPLACE`, then add it as a repository secret. The action requires this value to be non-empty; see [Secure Dashboard Key Generation](docs/reponomics/secure-dashboard-key.md) for the security tradeoffs.
+4. For `encrypted`, generate and save `DASHBOARD_SECRET_DO_NOT_REPLACE`, then add it as a repository secret. The action requires this value to be non-empty; see [Dashboard Key And Recovery](docs/reponomics/dashboard-key-and-recovery.md) for the security tradeoffs.
 5. Run **Actions -> Setup -> Run workflow**.
 6. If you enable hosted dashboard publication, open **Settings -> Pages** and set **Build and deployment -> Source** to **GitHub Actions**.
 7. Run **Actions -> Collect and Publish -> Run workflow** once to create the first dashboard immediately.
@@ -60,7 +60,7 @@ use_github_app: false
 
 The template starts with `artifact_retention_days: 90`, `use_github_app: false`, and `auto_doctor_every_n_days: 0`; these are validated by setup and workflow runs. Set `auto_doctor_every_n_days` to `1` through `30` to check the marker and run doctor as part of the collect-and-publish cadence when that many UTC days have elapsed since the last successful auto-doctor.
 
-Add repositories to `collect.repositories` when you want Reponomics to keep history for them. Add up to 8 of those same repositories to `publish.repositories` when you want them shown in the README and Pages dashboards. For more detail, see [Dashboard repository documentation](docs/reponomics/repository-guide.md).
+Add repositories to `collect.repositories` when you want Reponomics to keep history for them. Add up to 8 of those same repositories to `publish.repositories` when you want them shown in the README and Pages dashboards. For more detail, see [Configuration](docs/reponomics/configuration.md) and [Workflows](docs/reponomics/workflows.md).
 
 ### Token Scope And Repository Owners
 
@@ -81,10 +81,10 @@ The canonical store is the `dashboard-data` Actions artifact.
 - Metric README dashboard generation is only available in private repositories.
 - `artifact_retention_days` configures the retention period for dashboard data workflow artifacts, in the event that there is an interruption in the collection routine. Normally, only a small number of data artifacts are stored in the repository's artifact storage, and each time collection runs, the oldest artifact is deleted. `artifact_retention_days` can be thought of as the number of days GitHub should save your backup artifacts if the repository workflows stop functioning, credentials expire, etc.
 
-For the one-minute setup checklist, see [Dashboard Essentials](docs/reponomics/dashboard-essentials.md). If a workflow fails, start with [Troubleshooting](docs/reponomics/troubleshooting.md). For the full mode comparison, see [Privacy Configuration Matrix](docs/reponomics/privacy-configuration-matrix.md). For repository access implications, see [Repository Access And Trust Boundary](docs/reponomics/trust-boundary.md). Common questions are answered in the [FAQ](docs/reponomics/faq.md).
+For the one-minute setup checklist, see [Setup](docs/reponomics/setup.md). If a workflow fails, start with [Troubleshooting](docs/reponomics/troubleshooting.md). For publication choices, see [Publication](docs/reponomics/publication.md). For data-mode, privacy, and repository access tradeoffs, see [Privacy And Security](docs/reponomics/privacy-and-security.md). Common questions are answered in the [FAQ](docs/reponomics/faq.md).
 
 ## Managed Docs
 
-Reponomics may update managed local documentation under `docs/reponomics/` after successful collect-and-publish runs. It writes only that namespace and commits with `[skip ci]`. Disable or delete `.github/workflows/update-docs.yml` before editing `docs/reponomics/` yourself.
+Reponomics updates action-managed local documentation under `docs/reponomics/` after successful collect-and-publish runs so local guidance matches the action version this repository runs. It writes only that namespace and commits with `[skip ci]`. If you choose to own that directory yourself, disable or delete `.github/workflows/update-docs.yml` before editing it.
 
 The generated repository ships this setup README as `README.backup.md` before setup writes the shorter post-setup README. That backup is user-owned historical context; it is not managed by docs update.

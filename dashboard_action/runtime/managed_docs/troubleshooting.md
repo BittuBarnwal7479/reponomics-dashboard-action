@@ -1,11 +1,8 @@
 # Troubleshooting
 
-> [!NOTE]
-> These docs describe the official Reponomics generated workflows for the `v0` external beta. Repository owners can modify their copies; modified workflows may behave differently from what these docs describe.
-
 Start with **Actions -> Doctor -> Run workflow**. Doctor writes a workflow summary and, when available, uploads a machine-readable report artifact named `reponomics-doctor-report`.
 
-For the expected workflow modes, permissions, secrets, artifacts, and failure classes, see [Generated Workflow Contract](workflow-contract.md).
+For the expected workflow modes, permissions, secrets, artifacts, and failure classes, see [Workflows](workflows.md).
 
 ## Setup Fails
 
@@ -22,7 +19,7 @@ If setup succeeds, it writes `.reponomics/setup-complete`. Other generated workf
 
 Check:
 
-- `COLLECTION_TOKEN` exists and is not expired.
+- `COLLECTION_TOKEN` exists and is not expired, unless advanced GitHub App mode is enabled.
 - For a fine-grained PAT, the token has repository `Administration: read` for every repository in `collect.repositories`.
 - The token owner can access the listed repositories.
 - Bare repository names belong to the dashboard repository owner; use `owner/repo` for repositories owned elsewhere.
@@ -45,7 +42,7 @@ Check:
 
 - You are using the same key stored as `DASHBOARD_SECRET_DO_NOT_REPLACE`.
 - The key was not overwritten directly in repository secrets.
-- If rotation was started, finish the **Rotate Key** workflow before deleting `DASHBOARD_NEXT_SECRET`.
+- If rotation was started, finish **Rotate Key** before deleting `DASHBOARD_NEXT_SECRET`.
 - Run Doctor with a comparison key if you want to test whether a user-held key can decrypt the current artifact.
 
 Reponomics cannot recover a lost dashboard key unless a usable old or current key still exists outside the encrypted artifact.
@@ -71,3 +68,8 @@ Useful diagnostic material:
 - screenshot for visual dashboard problems.
 
 Do not share dashboard keys, GitHub tokens, retained artifact contents, private repository data, or vulnerability details in public issues.
+
+## Continue
+
+- [Support](support.md)
+- [Dashboard key and recovery](dashboard-key-and-recovery.md)

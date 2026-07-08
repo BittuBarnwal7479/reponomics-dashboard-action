@@ -1,15 +1,12 @@
-# Support Guidance
-
-> [!NOTE]
-> These docs describe the official Reponomics generated workflows for the `v0` external beta. Repository owners can modify their copies; modified workflows may behave differently from what these docs describe.
+# Support
 
 ## Ways To Reach The Project
 
-- Open an issue in `reponomics/reponomics-dashboard-action` for technical problems, bugs, documentation errors, and concrete change requests.
-- Start a discussion in that repository for ideas, questions, and feedback from other users.
+- Open an issue in [`reponomics/reponomics-dashboard-action`](https://github.com/reponomics/reponomics-dashboard-action/issues) for technical problems, bugs, documentation errors, and concrete change requests.
+- Start a [discussion](https://github.com/reponomics/reponomics-dashboard-action/discussions) for ideas, questions, and feedback from other users.
 - Contact `support@reponomics.org` for serious support problems that are sensitive but do not require a private vulnerability report.
 
-Security or vulnerability reports should use private vulnerability reporting rather than public issues or discussions.
+Security or vulnerability reports should use private vulnerability reporting rather than public issues or discussions. See [Vulnerability Reporting](vulnerability-reporting.md).
 
 ## Reporting A Problem
 
@@ -28,15 +25,15 @@ Do not share `COLLECTION_TOKEN`, `DASHBOARD_SECRET_DO_NOT_REPLACE`, retained art
 
 ## Response Expectations
 
-Feature requests and product-shaping feedback are welcome during beta, especially requests for repository signals that fit the existing GitHub permissions, data model, and dashboard architecture.
+Feature requests and product-shaping feedback are welcome during the pre-wide-release beta, especially requests for repository signals that fit the existing GitHub permissions, data model, and dashboard architecture.
 
 Reponomics cannot promise commercial support coverage, but beta users are treated as collaborators rather than anonymous traffic. Reports that improve the official generated workflows, docs, and dashboard behavior are especially valuable.
 
 ## First Places To Check
 
-- [Dashboard Essentials](dashboard-essentials.md)
+- [Setup](setup.md)
 - [Troubleshooting](troubleshooting.md)
-- [Dashboard repository guide](repository-guide.md)
+- [Workflows](workflows.md)
 - [FAQ](faq.md)
-- [Privacy and artifacts](privacy-and-artifacts.md)
-- [Security guidance](security.md)
+- [Data and artifacts](data-and-artifacts.md)
+- [Privacy and security](privacy-and-security.md)

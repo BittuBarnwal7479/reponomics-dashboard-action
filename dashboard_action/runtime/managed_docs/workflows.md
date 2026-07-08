@@ -1,9 +1,45 @@
-# Generated Workflow Contract
+# Workflows
 
-> [!NOTE]
-> These docs describe the official Reponomics generated workflows for the `v0` external beta. Repository owners can modify their copies; modified workflows may behave differently from what these docs describe.
+Generated Reponomics dashboard repositories use a small set of GitHub Actions workflows. This page is both the maintainer guide and the public contract for the official generated Reponomics `v0` workflows.
 
-This page summarizes the public contract of the generated dashboard workflows. It is written for copied dashboard repositories, not for people embedding the composite action directly in unrelated workflows.
+These details are written for copied dashboard repositories. People embedding the composite action directly in unrelated workflows may create different behavior.
+
+## Maintainer Overview
+
+Run **Setup** once after editing `config.yaml` and adding required secrets. Setup validates configuration and credentials, writes `.reponomics/setup-complete`, and replaces the starter README. Operational workflows skip normal work until the setup marker exists.
+
+**Collect and Publish** is the ordinary scheduled workflow. Collect restores retained state, collects current GitHub data, verifies lineage, and uploads the next `dashboard-data` artifact. Publish restores retained state from the current collect run, renders dashboard output, and deploys Pages, uploads an HTML dashboard artifact, or commits README dashboard output according to configuration.
+
+Manual dispatch with `skip_collect: true` republishes existing retained data without collecting new data.
+
+Run **Doctor** first when a workflow fails, a dashboard does not unlock, or output looks wrong. Doctor restores dashboard and retained artifacts from a selected workflow run, checks payloads and keys, and uploads `reponomics-doctor-report`.
+
+Use **Rotate Key** for ordinary encrypted-mode key rotation. Set `DASHBOARD_NEXT_SECRET`, run the workflow, confirm the dashboard opens with the new key, then replace `DASHBOARD_SECRET_DO_NOT_REPLACE` and delete `DASHBOARD_NEXT_SECRET`. Normal collection refuses to run while `DASHBOARD_NEXT_SECRET` is still set.
+
+Use **INCIDENT - Reset** only for suspected key exposure. Make the dashboard repository private and disable exposed Pages output before relying on the reset workflow. Incident reset re-encrypts retained state with `DASHBOARD_NEXT_SECRET`, uploads a fresh `dashboard-data` artifact, and purges old workflow history associated with prior retained artifacts.
+
+**Update Docs** refreshes `docs/reponomics/` from the managed docs payload shipped with the action version. Disable or delete the workflow before making local edits under that namespace.
+
+**Keep Alive** runs monthly to create repository activity and a persistent data safety reminder. It is a best-effort guard against scheduled workflows becoming inactive; it is not a backup strategy.
+
+## Maintenance And Liveness
+
+The dashboard is low-maintenance only if scheduled workflows keep running, credentials stay valid, retained artifacts do not expire without a successor, and the repository owner preserves the dashboard key.
+
+Collection runs on the generated schedule after setup. GitHub may disable scheduled workflows in inactive public repositories, and inactive schedules are an operational risk for any dashboard repository. The generated keepalive workflow runs monthly, commits `.reponomics/keepalive.md`, and tries to create one persistent data safety reminder issue.
+
+`artifact_retention_days` controls how long each uploaded artifact remains downloadable. It is not the dashboard history window. If scheduled workflows stop unexpectedly, download the latest `dashboard-data` artifact before it expires, then re-enable workflows from the Actions tab.
+
+`auto_doctor_every_n_days` can run Doctor during the collect-and-publish cadence when the configured number of UTC days has elapsed since the last successful auto-doctor. Use this as routine validation, not as a substitute for investigating workflow failures.
+
+Periodically confirm:
+
+- scheduled Collect and Publish runs are still completing;
+- `COLLECTION_TOKEN` or GitHub App credentials have not expired or lost repository access;
+- encrypted dashboards still unlock with the saved dashboard key;
+- `DASHBOARD_NEXT_SECRET` is unset outside active rotation or incident reset;
+- Update Docs has not reported `permission_missing` or `manifest_inconsistent`;
+- important retained history has an independent export if artifact loss would matter.
 
 ## Modes And Workflows
 
@@ -72,3 +108,8 @@ These failures are deliberate runtime behavior:
 - `rotate-key` or `incident-reset` is run without the required next key or confirmation inputs.
 
 When one of these occurs, run **Doctor** when artifacts exist, then use the workflow summary and `reponomics-doctor-report` as the first support evidence.
+
+## Continue
+
+- [Troubleshooting](troubleshooting.md)
+- [Data and artifacts](data-and-artifacts.md)

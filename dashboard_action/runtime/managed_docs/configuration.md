@@ -1,55 +1,72 @@
-# Configuration Reference
+# Configuration
 
-> [!NOTE]
-> These docs describe the official Reponomics generated workflows for the `v0` external beta. Repository owners can modify their copies; modified workflows may behave differently from what these docs describe.
+`config.yaml` is the active dashboard configuration. Reponomics reads it during setup, collection, publication, rotation, incident reset, Doctor, and docs updates. Generated workflows fail closed when a configuration would expose plaintext dashboard data in a public place.
 
-> [!NOTE]
-> These docs describe how the official generated workflows and action runtime behave. When a configuration is described as rejected or unsupported, that means the generated workflow or action fails, skips publication, or stops setup for that state.
+This page explains the decisions. The full key table lives in [Configuration Reference](configuration-reference.md).
 
-## About
+## Required Decisions
 
-The Reponomics Dashboard template repo uses a pre-defined set of template workflows that invoke the Reponomics Dashboard [public GitHub action](https://github.com/reponomics/reponomics-dashboard-action). Those workflows read `config.yaml` at runtime, validate the selected data-mode and publication settings, then pass the resolved values to the action. For security reasons, invalid or syntactically ill-formed `config.yaml` files will cause the workflow to fail with a notice.
+Set `i_have_read_the_readme: true` after reading the setup README. It is not a legal agreement; it is a guard against running setup with the placeholder file untouched.
 
-## Setup
+Choose `data_mode`:
 
-To get started, edit `config.yaml`, commit the change, add the required secrets, and run **Actions -> Setup -> Run workflow**. Setup reads `config.yaml`, validates it, and writes `.reponomics/setup-complete`. Other generated workflows are gated on that marker so they do not collect, publish, rotate, reset, or update docs before setup has completed.
+- `encrypted` is the default recommendation. It encrypts retained data and dashboard payloads with `DASHBOARD_SECRET_DO_NOT_REPLACE`, supports hosted Pages dashboards, and is required in public repositories.
+- `plaintext` is only for private repositories where GitHub repository and Actions artifact access are the intended privacy boundary. It stores retained CSV files directly in the `dashboard-data` artifact and does not publish Pages.
 
-Setup also replaces the template's initial root `README.md` with either a markdown dashboard, if you opt in and the repository is private, or a generic post-setup notice. The original root `README.md` remains available at `README.backup.md`.
+Choose publication surfaces:
 
-Setup does not collect traffic immediately. After setup succeeds, run **Actions -> Collect and Publish -> Run workflow** once if you want the first dashboard before the next scheduled run.
+- `publish_pages_dashboard: true` publishes an encrypted hosted dashboard through GitHub Pages. It requires `data_mode: encrypted` and the repository Pages source set to **GitHub Actions**.
+- `publish_readme_dashboard: true` writes markdown/SVG metrics to the repository README. It is private-repository only because the output is committed to git history.
 
-## Config Options - Reference
+Choose repositories:
 
-The setup fields at the top of `config.yaml` represent important user preferences and do not ship with default values.
+- `collect.repositories` lists repositories whose history Reponomics should collect and retain.
+- `publish.repositories` is the subset, up to 8 repositories, shown in README and Pages dashboards.
 
-- `i_have_read_the_readme`: required boolean; set to `true` after you have read the root README. (NOTE: This is only meant to emphasize the importance of "reading the manual" - it does not represent any legal agreement, and any legal requirements are summarized in the template repo's LICENSE file)
+Repository entries may be bare names such as `api`, which resolve to the dashboard repository owner, or full names such as `other-owner/api`.
 
-- `data_mode`: required string; `encrypted` stores retained dashboard data encrypted, while `plaintext` stores it unencrypted and is only supported in private repositories.
+## Optional Settings
 
-- `publish_pages_dashboard`: required boolean; when `true`, publish an HTML dashboard through GitHub Pages and require `data_mode: encrypted`.
+`artifact_retention_days` controls how long each uploaded workflow artifact remains downloadable if no successor artifact is uploaded. It is not the dashboard history window.
 
-- `publish_readme_dashboard`: required boolean; when `true`, publish a markdown/SVG metrics dashboard to the repository `README.md`; only supported in private repositories.
+`auto_doctor_every_n_days` controls whether Collect and Publish periodically invokes Doctor after successful publication. Use `0` to disable it.
 
-- `artifact_retention_days`: integer from `14` to `90`; controls GitHub Actions artifact expiry, not how long the dashboard can keep collecting data.
+`use_github_app` switches collection from PAT mode to a user-owned GitHub App installation token. Reponomics does not provide a shared collection app.
 
-- `use_github_app`: boolean; when `true`, collection uses a user-owned GitHub App installation token instead of `COLLECTION_TOKEN` as a PAT.
+## Credentials
 
-- `auto_doctor_every_n_days`: integer from `0` to `30`; `0` disables automatic doctor diagnostics. When set from `1` to `30`, collect-and-publish runs check the auto-doctor marker and run doctor when at least that many UTC days have elapsed since the last successful auto-doctor.
+Reponomics uses separate credentials for collection, repository workflow operations, and encrypted dashboard access.
 
-- `collect.repositories`: required list of repositories to collect. Entries may be bare repository names such as `api`, which resolve to the dashboard repository owner, or full names such as `other-owner/api`. Reponomics does not auto-discover or add repositories by default.
+`COLLECTION_TOKEN` is only for repository data collection. It does not need Pages, Actions, or write permissions. For the default PAT mode, create a fine-grained personal access token for the owner whose repositories should be collected and grant repository `Administration: read` for the repositories listed in `collect.repositories`.
 
-- `publish.repositories`: required list of repositories to render in the README and Pages dashboards. Every entry must also be present in `collect.repositories`, and the list can contain at most 8 repositories.
+Fine-grained PATs are scoped to one GitHub resource owner. If one dashboard must collect repositories across multiple users or organizations, use a classic PAT with `repo` scope where the relevant organizations allow it, and treat that broader token accordingly.
 
-`collect.repositories` is usually append-mostly: add a repository when you want Reponomics to start keeping history for it. To change what appears in dashboards, edit `publish.repositories`; removing a repository from `publish.repositories` does not stop collection.
+Advanced GitHub App mode uses a user-owned app installation token. Store `COLLECTION_APP_PRIVATE_KEY` as a repository secret and `COLLECTION_APP_ID` as a repository variable or secret. The generated workflow mints a short-lived installation token and passes that token to the Reponomics action as the collection credential.
 
-## Constraints
+Encrypted mode requires `DASHBOARD_SECRET_DO_NOT_REPLACE`. Store the same key in a password manager before saving it as a repository secret, because GitHub secrets cannot show the original value later. Key generation, rotation, and recovery limits are covered in [Dashboard Key And Recovery](dashboard-key-and-recovery.md).
 
-The official generated workflows fail closed for configurations that would publish or store unencrypted dashboard data in a public place. Public repositories cannot use `plaintext` data-mode. Pages dashboards also require `encrypted` data-mode, because ordinary GitHub Pages sites are publicly reachable unless your GitHub plan and repository settings provide a different boundary.
+The workflow `GITHUB_TOKEN` is separate from the collection credential. Generated workflows use it for checkout, artifact operations, README commits, Pages deployment, managed docs commits, and incident-reset cleanup according to each job's declared permissions.
 
-The following configuration choices are not supported, and the workflows will fail closed if they are found in the `config.yaml`:
+## Configuration Ownership
 
-- `data_mode: plaintext` for public repositories.
-- `data_mode: plaintext` and `publish_pages_dashboard`.
-- `publish_readme_dashboard` for public repositories.
+Your root `config.yaml` is user-owned. The generated workflows read it but do not silently rewrite it.
 
-Please keep in mind that other configurations do not represent any guarantee of privacy. In particular, the privacy benefits offered by the `encrypted` data-mode are wholly dependent on the use of a _high-entropy encryption key_ - without this, you should assume that `encrypted` data-mode by itself can only protect your data from easy access by "passers-by". Since we do not have adequate means to accurately assess whether a key is sufficiently high-entropy (and we deem that a false sense of privacy is worse than none at all), we do not attempt to block access on the basis of key strength. Instead, we try to provide (i) clear information about the kind of risk involved; (ii) guidance on how to easily generate a high-entropy key. For more information, see [Security Info](./security-info.md).
+`docs/reponomics/config.example.yaml` is the managed reference shape. Docs updates may refresh that reference copy, but they do not upgrade your active root `config.yaml` or old workflow wiring.
+
+## Rejected States
+
+The generated workflows reject these states:
+
+- `data_mode: plaintext` in a public repository.
+- `data_mode: plaintext` with `publish_pages_dashboard: true`.
+- `publish_readme_dashboard: true` in a public repository.
+- `publish.repositories` containing a repository not listed in `collect.repositories`.
+- `publish.repositories` containing more than 8 repositories.
+
+Pages publication also requires repository **Settings -> Pages -> Build and deployment -> Source** to be set to **GitHub Actions**.
+
+## Continue
+
+- [Privacy and security](privacy-and-security.md)
+- [Configuration Reference](configuration-reference.md)
+- [Workflows](workflows.md)

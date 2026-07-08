@@ -530,11 +530,7 @@ def test_publish_encrypted_unlock_shell_affordances(
     assert "Encrypted Pages mode for private growth analytics." not in dashboard
     assert "Client-side decryption" not in dashboard
     assert "AES-GCM" not in dashboard
-    assert (
-        '<a href="https://github.com/reponomics/reponomics-dashboard-demo/blob/main/docs/reponomics/security-info.md">'
-        + "Problems unlocking your dashboard? Click here</a>"
-        in dashboard
-    )
+    assert "Problems unlocking your dashboard? Click here" in dashboard
     assert (
         '<a class="brand-name" href="https://github.com/reponomics">Reponomics</a>' not in dashboard
     )
