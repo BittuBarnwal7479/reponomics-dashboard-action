@@ -15,6 +15,34 @@ Issues and pull requests that are most likely to be useful during pre-release:
 
 Please do not submit speculative integrations, large rewrites, new product features, formatting-only changes, or dependency churn unless a maintainer has asked for them.
 
+## Windows
+
+This project uses GNU Make, which is not included with Windows by default. The setup commands below should be run from an MSYS2 shell rather than PowerShell or Command Prompt.
+
+Before running the setup commands below, install Make using one of these options.
+
+With Chocolatey, run the following command from an elevated PowerShell session:
+
+```powershell
+choco install make
+```
+
+After installation, close and reopen your MSYS2 shell so it receives the updated `PATH`.
+
+Alternatively, install Make directly from an MSYS2 shell:
+
+```bash
+pacman -S make
+```
+
+From the MSYS2 shell that you will use for development, verify that Make is available:
+
+```bash
+make --version
+```
+
+Run all of the Make commands in the following sections from that same MSYS2 shell.
+
 ## Development Setup
 
 Use the project Makefile for local development. The repository expects a local `venv` virtual environment.
