@@ -17,31 +17,41 @@ Please do not submit speculative integrations, large rewrites, new product featu
 
 ## Windows
 
-This project uses GNU Make, which is not included with Windows by default. The setup commands below should be run from an MSYS2 shell rather than PowerShell or Command Prompt.
+The current development workflow assumes a POSIX shell and Python virtual environments whose executables are stored under `venv/bin`. Native PowerShell, Command Prompt, and MSYS2 development environments are not currently validated.
 
-Before running the setup commands below, install Make using one of these options.
-
-With Chocolatey, run the following command from an elevated PowerShell session:
+On Windows, use WSL 2 with Ubuntu 24.04. From an elevated PowerShell session, install WSL and Ubuntu:
 
 ```powershell
-choco install make
+wsl --install -d Ubuntu-24.04
 ```
 
-After installation, close and reopen your MSYS2 shell so it receives the updated `PATH`.
+Restart Windows if prompted, then launch Ubuntu and complete its initial setup. See Microsoft's [WSL installation guide](https://learn.microsoft.com/windows/wsl/install) for additional guidance.
 
-Alternatively, install Make directly from an MSYS2 shell:
+Within Ubuntu, install the required system tools:
 
 ```bash
-pacman -S make
+sudo apt update
+sudo apt install --yes git make python3 python3-venv python-is-python3
 ```
 
-From the MSYS2 shell that you will use for development, verify that Make is available:
+Install Node.js 24 using [nvm](https://github.com/nvm-sh/nvm#installing-and-updating). After installing nvm, run:
 
 ```bash
+nvm install 24
+nvm alias default 24
+```
+
+Verify the development toolchain:
+
+```bash
+python3 --version
+node --version
 make --version
 ```
 
-Run all of the Make commands in the following sections from that same MSYS2 shell.
+Python must be version 3.11, 3.12, or 3.13, and Node.js must be version 24.
+
+Clone the repository into the WSL filesystem—for example, somewhere under `~/src`—and run all Make commands from the Ubuntu shell. Do not run the documented Make workflow from PowerShell, Command Prompt, or an MSYS2 shell.
 
 ## Development Setup
 
